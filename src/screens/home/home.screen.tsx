@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, FlatListProps, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets, EdgeInsets } from 'react-native-safe-area-context';
 
 import { Product } from '../../components/product.component';
@@ -31,6 +31,7 @@ export const HomeScreen = (): React.JSX.Element => {
 
   const fetProducts = useCallback(async () => {
     try {
+      // Fetch products from API
       const response = await fetch('https://fakestoreapi.com/products', {
         method: 'GET',
         headers: {
@@ -69,15 +70,18 @@ export const HomeScreen = (): React.JSX.Element => {
       <Text style={styles.title}>PSI Test</Text>
       {
         showError ?
+          // Error
           <View>
             <Text style={styles.errorText}>Error fetching products ...</Text>
           </View>
           :
           laoding ?
+            // Loading
             <View>
               <ActivityIndicator size={'large'} />
             </View>
             :
+            // Products List
             <FlatList
               data={products}
               renderItem={renderItem}
