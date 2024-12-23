@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Text, SafeAreaView, Switch, View, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, SafeAreaView, Switch, View, ActivityIndicator, Dimensions } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
 import { LayoutAnimator } from '../../helper/layout-animator';
 import { ITvShow, ITvShowDetails } from '../../types/tv';
@@ -19,6 +19,7 @@ export const TvShowScreen = ({ navigation }: any): React.JSX.Element => {
   const [showTopTvShow, setShowTopTvShow] = useState<boolean>(false);
   const [error, setError] = useState(false);
   const [searchText, setSearchText] = useState('');
+  const [loadingOverlay, setLoadingOverlay] = useState(false);
 
   useEffect(() => {
     const allMovies: ITvShow[] = [...tvShows];
@@ -68,17 +69,21 @@ export const TvShowScreen = ({ navigation }: any): React.JSX.Element => {
 
   const onTvShowPressed = useCallback(async (id: number) => {
     try {
+      setLoadingOverlay(true);
       const result: ITvShowDetails | undefined = await TVShowService.getTvSDetails(id);
       if (result) {
-        navigation.navigate(routes.MOVIE_DETAILS, {id: result.id, name: result.name, overview: result.overview, genres: result.genres, poster_path: result.poster_path, release_date: result.first_air_date, vote_average: result.vote_average});
+        navigation.navigate(routes.MOVIE_DETAILS, { id: result.id, name: result.name, overview: result.overview, genres: result.genres, poster_path: result.poster_path, release_date: result.first_air_date, vote_average: result.vote_average });
+        setLoadingOverlay(false);
       }
-    } catch {}
+    } catch {
+      setLoadingOverlay(false);
+    }
   }, [navigation]);
   // ----------------
 
   const renderTVShow = useCallback((tv: any) => {
     const props: ITvShow = tv.item;
-    return <Poster id={props.id} title={props.name} vote_average={props.vote_average} date={props.first_air_date} poster_path={props.poster_path} onPress={onTvShowPressed}/>;
+    return <Poster id={props.id} title={props.name} vote_average={props.vote_average} date={props.first_air_date} poster_path={props.poster_path} onPress={onTvShowPressed} />;
   }, [onTvShowPressed]);
   // ----------------
 
@@ -125,6 +130,12 @@ export const TvShowScreen = ({ navigation }: any): React.JSX.Element => {
             />
       }
       <View style={styles.separator} />
+      {
+        loadingOverlay &&
+        <View style={styles.overlayContainer}>
+          <ActivityIndicator size={'large'} color={'white'} />
+        </View>
+      }
     </SafeAreaView>
   );
   // ----------------------------------------------------------------------------------------
@@ -158,6 +169,13 @@ const styles = StyleSheet.create({
   },
   separator: {
     paddingTop: 160,
+  },
+  overlayContainer: {
+    position: 'absolute',
+    width: '100%',
+    height: Dimensions.get('window').height,
+    justifyContent: 'center',
+    backgroundColor: 'background: rgba(0,0,0,0.5)',
   },
 });
 // ------------------------------------------------------------------------------------------

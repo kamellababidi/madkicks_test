@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Text, SafeAreaView, Switch, View, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, SafeAreaView, Switch, View, ActivityIndicator, Dimensions } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
 import { IMovie, IMovieDetails } from '../../types/movie';
 import { LayoutAnimator } from '../../helper/layout-animator';
@@ -19,6 +19,7 @@ export const MovieScreen = ({ navigation }: any): React.JSX.Element => {
   const [showTopMovies, setShowTopMovies] = useState<boolean>(false);
   const [error, setError] = useState(false);
   const [searchText, setSearchText] = useState('');
+  const [loadingOverlay, setLoadingOverlay] = useState(false);
 
   useEffect(() => {
     const allMovies: IMovie[] = [...movies];
@@ -68,17 +69,21 @@ export const MovieScreen = ({ navigation }: any): React.JSX.Element => {
 
   const onMoviePressed = useCallback(async (id: number) => {
     try {
+      setLoadingOverlay(true);
       const result: IMovieDetails | undefined = await MovieService.getMovieDetails(id);
       if (result) {
-        navigation.navigate(routes.MOVIE_DETAILS, {id: result.id, name: result.title, overview: result.overview, genres: result.genres, poster_path: result.poster_path, release_date: result.release_date, vote_average: result.vote_average});
+        setLoadingOverlay(false);
+        navigation.navigate(routes.MOVIE_DETAILS, { id: result.id, name: result.title, overview: result.overview, genres: result.genres, poster_path: result.poster_path, release_date: result.release_date, vote_average: result.vote_average });
       }
-    } catch {}
+    } catch {
+      setLoadingOverlay(false);
+    }
   }, [navigation]);
   // ----------------
 
   const renderMovie = useCallback((movie: any) => {
     const props: IMovie = movie.item;
-    return <Poster id={props.id} title={props.title} vote_average={props.vote_average} date={props.release_date} poster_path={props.poster_path} onPress={onMoviePressed}/>;
+    return <Poster id={props.id} title={props.title} vote_average={props.vote_average} date={props.release_date} poster_path={props.poster_path} onPress={onMoviePressed} />;
   }, [onMoviePressed]);
   // ----------------
 
@@ -125,6 +130,12 @@ export const MovieScreen = ({ navigation }: any): React.JSX.Element => {
             />
       }
       <View style={styles.separator} />
+      {
+        loadingOverlay &&
+        <View style={styles.overlayContainer}>
+          <ActivityIndicator size={'large'} color={'white'} />
+        </View>
+      }
     </SafeAreaView>
   );
   // ----------------------------------------------------------------------------------------
@@ -158,6 +169,13 @@ const styles = StyleSheet.create({
   },
   separator: {
     paddingTop: 160,
+  },
+  overlayContainer: {
+    position: 'absolute',
+    width: '100%',
+    height: Dimensions.get('window').height,
+    justifyContent: 'center',
+    backgroundColor: 'background: rgba(0,0,0,0.5)',
   },
 });
 // ------------------------------------------------------------------------------------------
